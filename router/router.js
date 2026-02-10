@@ -39,7 +39,7 @@ res.cookie('token',token,{
       console.log("User logged in successfully   " +  token);
       return res.json({ message: "Login successful" + token, user });
     });
-  })(req, res, next); // ✅ THIS LINE FIXES HANGING
+  })(req, res, next); 
 });
 
 const authenticateToken = (req,res,next)=>{
@@ -58,6 +58,23 @@ const authenticateToken = (req,res,next)=>{
  
   });
 }
+router.get('/auth/google',
+passport.authenticate('google',{scope:['profile']})
+);
+router.get('/auth/google/callback',
+passport.authenticate('google',{failureRedirect:'/login.html'}),
+(req,res)=>{
+  const token = jwt.sign({
+    id:req.user.id,
+    username:req.user.username
+  },JWT_SECRET,{expiresIn:'1h'});
+  res.cookie('token',token,{
+    httpOnly:true,
+    maxAge:3600000
+  })
+  res.redirect('/dashboard');
+}
+);
 router.get('/dashboard',authenticateToken, dashboard);
 module.exports = router;
 

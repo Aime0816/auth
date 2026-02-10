@@ -1,4 +1,5 @@
 const localStrategy = require('passport-local').Strategy;
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const bcrypt = require('bcryptjs');
 const passport = require('passport');
 const connection = require('../config/db');
@@ -30,18 +31,36 @@ function passportConfig() {
 }
 )
 )
+passport.use(
+    new GoogleStrategy({
+        clientID:process.env.clientID,
+        clientSecret:process.env.clientSecret,
+        callbackURL:'http://localhost:3000/auth/google/callback'
+    },
+    (accessToken, refreshToken, profile, done) => {
+        const user = {
+            id:profile.id,
+            username:profile.displayName,
+            accessToken,  
+            refreshToken
+        }
+        console.log('Google profile:', profile);
+        console.log('Access Token:', accessToken);
+        console.log('Refresh Token:', refreshToken);
+        return done(null, user);
+    }
+)
+)
 }
 passport.serializeUser(function (user, done) {
     done(null, user.id);
 })
 passport.deserializeUser(function (id, done) {
-    const query = 'SELECT * FROM users WHERE id = ?';
-    connection.query(query,[id],function(err,results){
-        if(err){
-            return done(err);
-        }
-        done(null, results[0]);
-    })
+  
+       return done(null, {id});
+   
 })
+
+
 
 module.exports = passportConfig;
